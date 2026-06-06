@@ -2,6 +2,7 @@ package com.beadrop.camera.ui.components
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.*
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -166,6 +167,7 @@ fun RecordingIndicator(
     modifier: Modifier = Modifier,
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "recBlink")
+    @Suppress("DEPRECATION")
     val dotAlpha by infiniteTransition.animateFloat(
         initialValue = 1f,
         targetValue = 0.3f,

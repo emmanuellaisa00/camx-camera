@@ -9,13 +9,14 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -36,12 +37,7 @@ import com.beadrop.design.tokens.ColorTokens
 import com.beadrop.design.tokens.SizeTokens
 
 /**
- * Premium capture button with:
- * - Spring-physics press animation
- * - Long-press for burst/video
- * - Recording pulse animation
- * - Haptic feedback on press
- * - Smooth state transitions
+ * Premium capture button with spring-physics interactions.
  */
 @Composable
 fun CaptureButton(
@@ -56,7 +52,6 @@ fun CaptureButton(
     val haptic = LocalHapticFeedback.current
     var isPressed by remember { mutableStateOf(false) }
 
-    // Spring animation for press
     val scale by animateFloatAsState(
         targetValue = when {
             isPressed -> 0.88f
@@ -70,11 +65,9 @@ fun CaptureButton(
         label = "captureScale",
     )
 
-    // Inner button size animation
     val innerSize by animateDpAsState(
         targetValue = when {
             isRecording -> 28.dp
-            isVideoMode -> SizeTokens.CaptureButtonInner
             else -> SizeTokens.CaptureButtonInner
         },
         animationSpec = spring(
@@ -84,7 +77,6 @@ fun CaptureButton(
         label = "captureInner",
     )
 
-    // Inner corner radius
     val innerCorner by animateDpAsState(
         targetValue = if (isRecording) 8.dp else SizeTokens.CaptureButtonInner / 2,
         animationSpec = spring(
@@ -94,7 +86,6 @@ fun CaptureButton(
         label = "captureCorner",
     )
 
-    // Inner color
     val innerColor by animateColorAsState(
         targetValue = when {
             isRecording -> ColorTokens.RecordingRed
@@ -105,8 +96,10 @@ fun CaptureButton(
         label = "captureColor",
     )
 
-    // Recording pulse
+    // Recording pulse alpha
+    @Suppress("DEPRECATION")
     val infiniteTransition = rememberInfiniteTransition(label = "recordPulse")
+    @Suppress("DEPRECATION")
     val pulseAlpha by infiniteTransition.animateFloat(
         initialValue = 0f,
         targetValue = if (isRecording) 0.4f else 0f,
@@ -117,7 +110,6 @@ fun CaptureButton(
         label = "pulseAlpha",
     )
 
-    // Ring color
     val ringColor by animateColorAsState(
         targetValue = when {
             isRecording -> ColorTokens.RecordingRed.copy(alpha = 0.6f)
@@ -138,11 +130,8 @@ fun CaptureButton(
                     onPress = {
                         isPressed = true
                         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                        val released = tryAwaitRelease()
+                        tryAwaitRelease()
                         isPressed = false
-                        if (released) {
-                            // Normal tap
-                        }
                     },
                     onTap = {
                         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -188,11 +177,7 @@ fun CaptureButton(
                 modifier = Modifier
                     .size(innerSize)
                     .clip(
-                        if (isRecording) {
-                            androidx.compose.foundation.shape.RoundedCornerShape(innerCorner)
-                        } else {
-                            CircleShape
-                        }
+                        if (isRecording) RoundedCornerShape(innerCorner) else CircleShape
                     )
                     .background(
                         brush = Brush.radialGradient(
