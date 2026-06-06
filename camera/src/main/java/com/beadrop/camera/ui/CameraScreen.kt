@@ -5,22 +5,32 @@ import androidx.camera.view.PreviewView
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -28,32 +38,18 @@ import com.beadrop.camera.capture.RecordingState
 import com.beadrop.camera.ui.components.*
 import com.beadrop.camera.viewmodel.CameraViewModel
 import com.beadrop.core.domain.model.*
-import com.beadrop.design.components.buttons.CaptureButton
-import com.beadrop.design.components.buttons.GlassIconButton
-import com.beadrop.design.components.glass.GlassIntensity
-import com.beadrop.design.components.glass.GlassPill
-import com.beadrop.design.components.glass.GlassSurface
 import com.beadrop.design.haptics.rememberHapticEngine
-import com.beadrop.design.theme.BeadropTheme
 import com.beadrop.design.tokens.ColorTokens
-import com.beadrop.design.tokens.SpacingTokens
-import com.beadrop.design.tokens.TypographyTokens
 
 /**
- * Main Camera Screen — the flagship experience.
+ * Main Camera Screen — Clean Samsung One UI Dark Style.
  *
- * Composable hierarchy:
- * - Camera viewfinder (full bleed)
- * - Top controls bar (glassmorphic)
- * - Mode selector strip
- * - Zoom controls
- * - Bottom capture bar
- * - Focus/exposure overlays
- * - Grid overlay
- * - Level indicator
- * - Histogram overlay
- * - Timer countdown overlay
- * - Zoom navigator (at 10x+)
+ * Layout (top to bottom):
+ * 1. Top controls (flash, ratio, timer, settings) — minimal white icons
+ * 2. Full-bleed viewfinder with focus/grid overlays
+ * 3. Zoom quick-pills (0.5x, 1x, 2x, 5x, 10x)
+ * 4. Mode selector strip (NIGHT, PORTRAIT, PHOTO, VIDEO)
+ * 5. Bottom bar: gallery thumbnail | capture button | switch camera
  */
 @Composable
 fun CameraScreen(
@@ -62,33 +58,48 @@ fun CameraScreen(
     onNavigateToSettings: () -> Unit = {},
 ) {
     val lifecycleOwner = LocalLifecycleOwner.current
-    val context = LocalContext.current
     val haptics = rememberHapticEngine()
 
     // Collect states
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val config by viewModel.config.collectAsStateWithLifecycle()
     val cameraMode by viewModel.cameraMode.collectAsStateWithLifecycle()
+    val config by viewModel.config.collectAsStateWithLifecycle()
     val zoomState by viewModel.zoomState.collectAsStateWithLifecycle()
     val focusState by viewModel.focusState.collectAsStateWithLifecycle()
     val recordingState by viewModel.recordingState.collectAsStateWithLifecycle()
     val recordingDuration by viewModel.recordingDuration.collectAsStateWithLifecycle()
     val isFrontCamera by viewModel.isFrontCamera.collectAsStateWithLifecycle()
     val timerCountdown by viewModel.timerCountdown.collectAsStateWithLifecycle()
-    val showNavigator by viewModel.showNavigator.collectAsStateWithLifecycle()
     val showGrid by viewModel.showGrid.collectAsStateWithLifecycle()
-    val showLevel by viewModel.showLevel.collectAsStateWithLifecycle()
-    val showHistogram by viewModel.showHistogram.collectAsStateWithLifecycle()
     val lastCapturedUri by viewModel.lastCapturedUri.collectAsStateWithLifecycle()
+
+    // Capture flash animation
+    var showCaptureFlash by remember { mutableStateOf(false) }
+    var captureScale by remember { mutableFloatStateOf(1f) }
+
+    val flashAlpha by animateFloatAsState(
+        targetValue = if (showCaptureFlash) 1f else 0f,
+        animationSpec = tween(80),
+        label = "flashAlpha",
+        finishedListener = { showCaptureFlash = false },
+    )
+
+    val captureButtonScale by animateFloatAsState(
+        targetValue = captureScale,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessHigh,
+        ),
+        label = "captureBounce",
+    )
 
     // Initialize camera
     LaunchedEffect(Unit) {
         viewModel.initializeCamera()
     }
 
-    // Rebind on mode/config/camera changes
     val previewView = remember { mutableStateOf<PreviewView?>(null) }
 
+    // Rebind on mode/config changes
     LaunchedEffect(cameraMode, config, isFrontCamera) {
         previewView.value?.let { pv ->
             viewModel.getCameraEngine().bindCamera(
@@ -100,10 +111,7 @@ fun CameraScreen(
         }
     }
 
-    val isVideoMode = cameraMode == CameraMode.VIDEO ||
-            cameraMode == CameraMode.SLOW_MOTION ||
-            cameraMode == CameraMode.TIMELAPSE ||
-            cameraMode == CameraMode.HYPERLAPSE
+    val isVideoMode = cameraMode == CameraMode.VIDEO
     val isRecording = recordingState is RecordingState.Recording || recordingState is RecordingState.Paused
 
     Box(
@@ -112,7 +120,7 @@ fun CameraScreen(
             .background(Color.Black)
     ) {
         // ═══════════════════════════════════════════
-        // LAYER 1: Camera Preview (Full Bleed)
+        // VIEWFINDER
         // ═══════════════════════════════════════════
         AndroidView(
             factory = { ctx ->
@@ -137,11 +145,11 @@ fun CameraScreen(
                                 size.width, size.height,
                             )
                         },
-                        onDoubleTap = { offset ->
+                        onDoubleTap = {
                             haptics.mediumImpact()
                             viewModel.nextZoomStop()
                         },
-                        onLongPress = { offset ->
+                        onLongPress = {
                             haptics.heavyImpact()
                             viewModel.lockFocus()
                         },
@@ -155,43 +163,7 @@ fun CameraScreen(
         )
 
         // ═══════════════════════════════════════════
-        // LAYER 2: Top Gradient Vignette
-        // ═══════════════════════════════════════════
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(120.dp)
-                .align(Alignment.TopCenter)
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(
-                            ColorTokens.ViewfinderGradientTop,
-                            ColorTokens.ViewfinderClear,
-                        )
-                    )
-                )
-        )
-
-        // ═══════════════════════════════════════════
-        // LAYER 3: Bottom Gradient Vignette
-        // ═══════════════════════════════════════════
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(200.dp)
-                .align(Alignment.BottomCenter)
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(
-                            ColorTokens.ViewfinderClear,
-                            ColorTokens.ViewfinderGradientBottom,
-                        )
-                    )
-                )
-        )
-
-        // ═══════════════════════════════════════════
-        // LAYER 4: Grid Overlay
+        // GRID OVERLAY
         // ═══════════════════════════════════════════
         AnimatedVisibility(
             visible = showGrid,
@@ -202,7 +174,7 @@ fun CameraScreen(
         }
 
         // ═══════════════════════════════════════════
-        // LAYER 5: Focus Ring
+        // FOCUS RING
         // ═══════════════════════════════════════════
         AnimatedVisibility(
             visible = focusState.focusX > 0f || focusState.focusY > 0f,
@@ -218,7 +190,19 @@ fun CameraScreen(
         }
 
         // ═══════════════════════════════════════════
-        // LAYER 6: Timer Countdown
+        // CAPTURE FLASH (iOS-style white flash)
+        // ═══════════════════════════════════════════
+        if (flashAlpha > 0f) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .alpha(flashAlpha * 0.7f)
+                    .background(Color.White)
+            )
+        }
+
+        // ═══════════════════════════════════════════
+        // TIMER COUNTDOWN
         // ═══════════════════════════════════════════
         timerCountdown?.let { seconds ->
             Box(
@@ -227,98 +211,130 @@ fun CameraScreen(
             ) {
                 Text(
                     text = seconds.toString(),
-                    style = TypographyTokens.CameraTimer,
                     color = Color.White,
+                    fontSize = 72.sp,
+                    fontWeight = FontWeight.Bold,
                 )
             }
         }
 
         // ═══════════════════════════════════════════
-        // LAYER 7: Top Controls Bar
+        // TOP CONTROLS — Samsung One UI style
         // ═══════════════════════════════════════════
-        CameraTopBar(
-            modifier = Modifier
-                .fillMaxWidth()
-                .statusBarsPadding()
-                .padding(horizontal = SpacingTokens.L, vertical = SpacingTokens.S),
-            config = config,
-            cameraMode = cameraMode,
-            isRecording = isRecording,
-            onFlashClick = { 
-                haptics.lightTap()
-                viewModel.cycleFlashMode() 
-            },
-            onTimerClick = {
-                haptics.lightTap()
-                val timers = TimerDuration.entries
-                val idx = timers.indexOf(config.timer)
-                viewModel.setTimer(timers[(idx + 1) % timers.size])
-            },
-            onAspectRatioClick = {
-                haptics.lightTap()
-                val ratios = AspectRatio.entries
-                val idx = ratios.indexOf(config.aspectRatio)
-                viewModel.setAspectRatio(ratios[(idx + 1) % ratios.size])
-            },
-            onHDRClick = {
-                haptics.lightTap()
-                viewModel.toggleHDR()
-            },
-            onSettingsClick = onNavigateToSettings,
-        )
+        AnimatedVisibility(
+            visible = !isRecording,
+            enter = fadeIn() + slideInVertically(initialOffsetY = { -it }),
+            exit = fadeOut() + slideOutVertically(targetOffsetY = { -it }),
+            modifier = Modifier.align(Alignment.TopCenter),
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .statusBarsPadding()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                // Flash
+                IconButton(onClick = {
+                    haptics.lightTap()
+                    viewModel.cycleFlashMode()
+                }) {
+                    Icon(
+                        imageVector = when (config.flashMode) {
+                            FlashMode.OFF -> Icons.Outlined.FlashOff
+                            FlashMode.ON -> Icons.Filled.FlashOn
+                            FlashMode.AUTO -> Icons.Outlined.FlashAuto
+                            FlashMode.TORCH -> Icons.Filled.FlashOn
+                        },
+                        contentDescription = "Flash",
+                        tint = if (config.flashMode == FlashMode.OFF) ColorTokens.TopBarIcon else ColorTokens.TopBarIconActive,
+                    )
+                }
+
+                // Aspect Ratio
+                IconButton(onClick = {
+                    haptics.lightTap()
+                    val ratios = listOf(AspectRatio.RATIO_3_4, AspectRatio.RATIO_9_16, AspectRatio.RATIO_1_1, AspectRatio.FULL)
+                    val idx = ratios.indexOf(config.aspectRatio)
+                    viewModel.setAspectRatio(ratios[(idx + 1) % ratios.size])
+                }) {
+                    Box(
+                        modifier = Modifier
+                            .background(Color.Transparent)
+                            .padding(4.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(
+                            text = config.aspectRatio.displayName,
+                            color = ColorTokens.TopBarIcon,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                    }
+                }
+
+                // Timer
+                IconButton(onClick = {
+                    haptics.lightTap()
+                    val timers = TimerDuration.entries
+                    val idx = timers.indexOf(config.timer)
+                    viewModel.setTimer(timers[(idx + 1) % timers.size])
+                }) {
+                    Icon(
+                        imageVector = if (config.timer == TimerDuration.OFF) Icons.Outlined.Timer else Icons.Outlined.Timer,
+                        contentDescription = "Timer",
+                        tint = if (config.timer == TimerDuration.OFF) ColorTokens.TopBarIcon else ColorTokens.TopBarIconActive,
+                    )
+                    if (config.timer != TimerDuration.OFF) {
+                        Text(
+                            text = config.timer.displayName,
+                            color = ColorTokens.TopBarIconActive,
+                            fontSize = 8.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier
+                                .align(Alignment.BottomEnd)
+                                .padding(bottom = 2.dp, end = 2.dp),
+                        )
+                    }
+                }
+
+                // Settings
+                IconButton(onClick = {
+                    haptics.lightTap()
+                    onNavigateToSettings()
+                }) {
+                    Icon(
+                        imageVector = Icons.Outlined.Settings,
+                        contentDescription = "Settings",
+                        tint = ColorTokens.TopBarIcon,
+                    )
+                }
+            }
+        }
 
         // ═══════════════════════════════════════════
-        // LAYER 8: Recording Duration
+        // RECORDING INDICATOR
         // ═══════════════════════════════════════════
         AnimatedVisibility(
             visible = isRecording,
-            enter = fadeIn() + slideInVertically(),
-            exit = fadeOut() + slideOutVertically(),
+            enter = fadeIn(),
+            exit = fadeOut(),
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .statusBarsPadding()
-                .padding(top = 64.dp),
+                .padding(top = 16.dp),
         ) {
             RecordingIndicator(duration = recordingDuration)
         }
 
         // ═══════════════════════════════════════════
-        // LAYER 9: Zoom Navigator (10x+)
+        // ZOOM QUICK PILLS
         // ═══════════════════════════════════════════
-        AnimatedVisibility(
-            visible = showNavigator,
-            enter = fadeIn() + scaleIn(),
-            exit = fadeOut() + scaleOut(),
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .statusBarsPadding()
-                .padding(top = 80.dp, end = SpacingTokens.L),
-        ) {
-            ZoomNavigatorWindow()
-        }
-
-        // ═══════════════════════════════════════════
-        // LAYER 10: Histogram
-        // ═══════════════════════════════════════════
-        AnimatedVisibility(
-            visible = showHistogram,
-            enter = fadeIn() + slideInVertically(),
-            exit = fadeOut() + slideOutVertically(),
-            modifier = Modifier
-                .align(Alignment.TopStart)
-                .statusBarsPadding()
-                .padding(top = 80.dp, start = SpacingTokens.L),
-        ) {
-            HistogramOverlay()
-        }
-
-        // ═══════════════════════════════════════════
-        // LAYER 11: Zoom Control Strip
-        // ═══════════════════════════════════════════
-        ZoomControlStrip(
+        ZoomQuickPills(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(bottom = 200.dp),
+                .padding(bottom = 190.dp),
             currentZoom = zoomState.zoomRatio,
             onZoomSelected = { ratio ->
                 haptics.zoomStop()
@@ -327,12 +343,12 @@ fun CameraScreen(
         )
 
         // ═══════════════════════════════════════════
-        // LAYER 12: Mode Selector
+        // MODE SELECTOR — Samsung One UI style
         // ═══════════════════════════════════════════
         CameraModeSelectorStrip(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(bottom = 150.dp),
+                .padding(bottom = 140.dp),
             currentMode = cameraMode,
             onModeSelected = { mode ->
                 haptics.mediumImpact()
@@ -341,49 +357,72 @@ fun CameraScreen(
         )
 
         // ═══════════════════════════════════════════
-        // LAYER 13: Bottom Capture Bar
+        // BOTTOM BAR — Capture controls
         // ═══════════════════════════════════════════
-        CameraBottomBar(
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .align(Alignment.BottomCenter)
                 .navigationBarsPadding()
-                .padding(bottom = SpacingTokens.XXL),
-            isVideoMode = isVideoMode,
-            isRecording = isRecording,
-            lastCapturedUri = lastCapturedUri,
-            onCapture = {
-                haptics.heavyImpact()
-                if (isVideoMode) {
-                    if (isRecording) {
-                        viewModel.stopVideoRecording()
-                    } else {
-                        viewModel.startVideoRecording()
-                    }
-                } else {
-                    viewModel.capturePhoto()
-                }
-            },
-            onSwitchCamera = {
-                haptics.mediumImpact()
-                viewModel.switchCamera()
-            },
-            onGalleryClick = {
-                haptics.lightTap()
-                onNavigateToGallery()
-            },
-        )
-
-        // ═══════════════════════════════════════════
-        // LAYER 14: Level Indicator
-        // ═══════════════════════════════════════════
-        AnimatedVisibility(
-            visible = showLevel,
-            enter = fadeIn(),
-            exit = fadeOut(),
-            modifier = Modifier.align(Alignment.Center),
+                .padding(bottom = 24.dp, start = 32.dp, end = 32.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            LevelIndicatorOverlay()
+            // Gallery thumbnail
+            Box(
+                modifier = Modifier
+                    .size(52.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(ColorTokens.SurfaceElevated)
+                    .clickable { onNavigateToGallery() },
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    Icons.Outlined.PhotoLibrary,
+                    "Gallery",
+                    tint = Color.White.copy(alpha = 0.7f),
+                    modifier = Modifier.size(24.dp),
+                )
+            }
+
+            // CAPTURE BUTTON with iOS bounce animation
+            com.beadrop.design.components.buttons.CaptureButton(
+                modifier = Modifier.scale(captureButtonScale),
+                isVideoMode = isVideoMode,
+                isRecording = isRecording,
+                onCapture = {
+                    haptics.heavyImpact()
+                    if (isVideoMode) {
+                        if (isRecording) viewModel.stopVideoRecording()
+                        else viewModel.startVideoRecording()
+                    } else {
+                        // iOS-style: flash + bounce
+                        showCaptureFlash = true
+                        captureScale = 0.85f
+                        viewModel.capturePhoto()
+                        // Bounce back
+                        captureScale = 1f
+                    }
+                },
+            )
+
+            // Switch camera
+            IconButton(
+                onClick = {
+                    haptics.mediumImpact()
+                    viewModel.switchCamera()
+                },
+                modifier = Modifier
+                    .size(52.dp)
+                    .background(ColorTokens.SurfaceControl, CircleShape),
+            ) {
+                Icon(
+                    Icons.Filled.Cameraswitch,
+                    "Switch Camera",
+                    tint = Color.White,
+                    modifier = Modifier.size(26.dp),
+                )
+            }
         }
     }
 }

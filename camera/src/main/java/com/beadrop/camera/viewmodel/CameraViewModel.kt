@@ -13,11 +13,8 @@ import com.beadrop.camera.zoom.ZoomController
 import com.beadrop.core.domain.model.*
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -29,60 +26,20 @@ class CameraViewModel @Inject constructor(
     private val zoomController: ZoomController,
 ) : ViewModel() {
 
-    // ═══════════════════════════════════════════════
-    // STATE
-    // ═══════════════════════════════════════════════
-    
     private val _cameraMode = MutableStateFlow(CameraMode.PHOTO)
     val cameraMode: StateFlow<CameraMode> = _cameraMode.asStateFlow()
 
     private val _config = MutableStateFlow(CameraConfig())
     val config: StateFlow<CameraConfig> = _config.asStateFlow()
 
-    private val _proModeState = MutableStateFlow(ProModeState())
-    val proModeState: StateFlow<ProModeState> = _proModeState.asStateFlow()
-
     private val _showGrid = MutableStateFlow(false)
     val showGrid: StateFlow<Boolean> = _showGrid.asStateFlow()
-
-    private val _showLevel = MutableStateFlow(false)
-    val showLevel: StateFlow<Boolean> = _showLevel.asStateFlow()
-
-    private val _showHistogram = MutableStateFlow(false)
-    val showHistogram: StateFlow<Boolean> = _showHistogram.asStateFlow()
-
-    private val _showFocusPeaking = MutableStateFlow(false)
-    val showFocusPeaking: StateFlow<Boolean> = _showFocusPeaking.asStateFlow()
-
-    private val _showZebraStripes = MutableStateFlow(false)
-    val showZebraStripes: StateFlow<Boolean> = _showZebraStripes.asStateFlow()
 
     private val _timerCountdown = MutableStateFlow<Int?>(null)
     val timerCountdown: StateFlow<Int?> = _timerCountdown.asStateFlow()
 
     private val _lastCapturedUri = MutableStateFlow<Uri?>(null)
     val lastCapturedUri: StateFlow<Uri?> = _lastCapturedUri.asStateFlow()
-
-    // Combined UI state
-    val uiState: StateFlow<CameraUiState> = combine(
-        cameraEngine.cameraState,
-        cameraEngine.zoomState,
-        cameraEngine.focusState,
-        cameraEngine.exposureState,
-        _cameraMode,
-    ) { engineState, zoomState, focusState, exposureState, mode ->
-        CameraUiState(
-            engineState = engineState,
-            zoomState = zoomState,
-            focusState = focusState,
-            exposureState = exposureState,
-            currentMode = mode,
-        )
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = CameraUiState(),
-    )
 
     // Camera engine state
     val cameraState: StateFlow<CameraEngineState> = cameraEngine.cameraState
@@ -94,15 +51,6 @@ class CameraViewModel @Inject constructor(
     val recordingState: StateFlow<RecordingState> = videoCaptureManager.recordingState
     val recordingDuration: StateFlow<Long> = videoCaptureManager.recordingDuration
 
-    // Zoom
-    val showNavigator: StateFlow<Boolean> = zoomController.showNavigator
-    val showTargeting: StateFlow<Boolean> = zoomController.showTargeting
-    val showStabilization: StateFlow<Boolean> = zoomController.showStabilization
-
-    // ═══════════════════════════════════════════════
-    // INITIALIZATION
-    // ═══════════════════════════════════════════════
-
     fun initializeCamera() {
         viewModelScope.launch {
             cameraEngine.initialize()
@@ -111,18 +59,12 @@ class CameraViewModel @Inject constructor(
 
     fun getCameraEngine(): CameraEngine = cameraEngine
 
-    // ═══════════════════════════════════════════════
-    // CAMERA MODE
-    // ═══════════════════════════════════════════════
-
+    // Mode
     fun setMode(mode: CameraMode) {
         _cameraMode.value = mode
     }
 
-    // ═══════════════════════════════════════════════
-    // CAPTURE
-    // ═══════════════════════════════════════════════
-
+    // Capture
     fun capturePhoto() {
         viewModelScope.launch {
             val timer = _config.value.timer
@@ -141,9 +83,7 @@ class CameraViewModel @Inject constructor(
                     mirrorFront = _config.value.mirrorFrontCamera && isFrontCamera.value,
                 )
                 _lastCapturedUri.value = uri
-            } catch (e: Exception) {
-                // Error handled in captureState
-            }
+            } catch (_: Exception) {}
         }
     }
 
@@ -156,18 +96,7 @@ class CameraViewModel @Inject constructor(
         videoCaptureManager.stopRecording()
     }
 
-    fun pauseVideoRecording() {
-        videoCaptureManager.pauseRecording()
-    }
-
-    fun resumeVideoRecording() {
-        videoCaptureManager.resumeRecording()
-    }
-
-    // ═══════════════════════════════════════════════
-    // ZOOM
-    // ═══════════════════════════════════════════════
-
+    // Zoom
     fun setZoomRatio(ratio: Float) {
         zoomController.setZoom(ratio)
         cameraEngine.setZoomRatio(ratio)
@@ -184,10 +113,7 @@ class CameraViewModel @Inject constructor(
         cameraEngine.setZoomRatio(newZoom)
     }
 
-    // ═══════════════════════════════════════════════
-    // FOCUS
-    // ═══════════════════════════════════════════════
-
+    // Focus
     fun focusAtPoint(x: Float, y: Float, viewWidth: Int, viewHeight: Int) {
         cameraEngine.focusAtPoint(x, y, viewWidth, viewHeight)
     }
@@ -196,27 +122,11 @@ class CameraViewModel @Inject constructor(
         cameraEngine.lockFocus()
     }
 
-    fun unlockFocus() {
-        cameraEngine.unlockFocus()
-    }
-
-    // ═══════════════════════════════════════════════
-    // EXPOSURE
-    // ═══════════════════════════════════════════════
-
-    fun setExposureCompensation(value: Int) {
-        cameraEngine.setExposureCompensation(value)
-    }
-
-    // ═══════════════════════════════════════════════
-    // SETTINGS
-    // ═══════════════════════════════════════════════
-
+    // Settings
     fun cycleFlashMode() {
         val modes = FlashMode.entries
         val currentIndex = modes.indexOf(_config.value.flashMode)
-        val nextMode = modes[(currentIndex + 1) % modes.size]
-        _config.value = _config.value.copy(flashMode = nextMode)
+        _config.value = _config.value.copy(flashMode = modes[(currentIndex + 1) % modes.size])
     }
 
     fun setAspectRatio(ratio: AspectRatio) {
@@ -235,67 +145,12 @@ class CameraViewModel @Inject constructor(
         _showGrid.value = nextType != GridType.NONE
     }
 
-    fun toggleHDR() {
-        _config.value = _config.value.copy(hdrEnabled = !_config.value.hdrEnabled)
-    }
-
     fun switchCamera() {
         cameraEngine.switchCamera()
     }
-
-    fun toggleLevel() {
-        _showLevel.value = !_showLevel.value
-    }
-
-    fun toggleHistogram() {
-        _showHistogram.value = !_showHistogram.value
-    }
-
-    fun toggleFocusPeaking() {
-        _showFocusPeaking.value = !_showFocusPeaking.value
-    }
-
-    fun toggleZebraStripes() {
-        _showZebraStripes.value = !_showZebraStripes.value
-    }
-
-    // ═══════════════════════════════════════════════
-    // PRO MODE
-    // ═══════════════════════════════════════════════
-
-    fun setManualISO(iso: Int) {
-        _proModeState.value = _proModeState.value.copy(manualIso = iso)
-    }
-
-    fun setManualShutterSpeed(speed: Long) {
-        _proModeState.value = _proModeState.value.copy(manualShutterSpeed = speed)
-    }
-
-    fun setManualFocusDistance(distance: Float) {
-        _proModeState.value = _proModeState.value.copy(
-            manualFocusEnabled = true,
-            manualFocusDistance = distance,
-        )
-    }
-
-    fun setWhiteBalance(wb: WhiteBalance) {
-        _proModeState.value = _proModeState.value.copy(whiteBalance = wb)
-    }
-
-    // ═══════════════════════════════════════════════
-    // CLEANUP
-    // ═══════════════════════════════════════════════
 
     override fun onCleared() {
         super.onCleared()
         cameraEngine.release()
     }
 }
-
-data class CameraUiState(
-    val engineState: CameraEngineState = CameraEngineState(),
-    val zoomState: ZoomState = ZoomState(),
-    val focusState: FocusState = FocusState(),
-    val exposureState: ExposureState = ExposureState(),
-    val currentMode: CameraMode = CameraMode.PHOTO,
-)

@@ -3,126 +3,71 @@ package com.beadrop.design.tokens
 import androidx.compose.ui.graphics.Color
 
 /**
- * Beadrop Camera Design Tokens — Color System
+ * Beadrop Camera — Clean Samsung One UI Dark Color System
  * 
- * Inspired by VisionOS glass depth, Samsung camera precision, and Apple fluidity.
- * Every color is crafted for premium feel in both light and dark contexts.
+ * Minimal, dark, precise. No glassmorphism. Clean floating elements.
  */
 object ColorTokens {
 
     // ═══════════════════════════════════════════════
-    // PRIMARY PALETTE — Deep Space Blue
+    // PRIMARY — Samsung Blue
     // ═══════════════════════════════════════════════
-    val Primary = Color(0xFF3B82F6)
-    val PrimaryLight = Color(0xFF60A5FA)
-    val PrimaryDark = Color(0xFF2563EB)
-    val PrimaryContainer = Color(0xFF1E3A5F)
+    val Primary = Color(0xFF4A9DFF)
+    val PrimaryDark = Color(0xFF2979FF)
     val OnPrimary = Color(0xFFFFFFFF)
-    val OnPrimaryContainer = Color(0xFFD6E4FF)
 
     // ═══════════════════════════════════════════════
-    // SECONDARY PALETTE — Luminous Violet
-    // ═══════════════════════════════════════════════
-    val Secondary = Color(0xFF8B5CF6)
-    val SecondaryLight = Color(0xFFA78BFA)
-    val SecondaryDark = Color(0xFF7C3AED)
-    val SecondaryContainer = Color(0xFF2E1065)
-    val OnSecondary = Color(0xFFFFFFFF)
-    val OnSecondaryContainer = Color(0xFFEDE9FE)
-
-    // ═══════════════════════════════════════════════
-    // ACCENT — Camera Gold
-    // ═══════════════════════════════════════════════
-    val Accent = Color(0xFFF59E0B)
-    val AccentLight = Color(0xFFFBBF24)
-    val AccentDark = Color(0xFFD97706)
-
-    // ═══════════════════════════════════════════════
-    // SURFACE SYSTEM
+    // SURFACE — Pure black camera background
     // ═══════════════════════════════════════════════
     val SurfacePure = Color(0xFF000000)
-    val SurfaceDeep = Color(0xFF0A0A0A)
-    val SurfaceDark = Color(0xFF121212)
-    val SurfaceElevated = Color(0xFF1A1A1A)
-    val SurfaceCard = Color(0xFF1E1E1E)
-    val SurfaceSheet = Color(0xFF242424)
-    val SurfaceOverlay = Color(0xFF2A2A2A)
+    val SurfaceDim = Color(0xFF0D0D0D)
+    val SurfaceCard = Color(0xFF1A1A1A)
+    val SurfaceElevated = Color(0xFF252525)
+    val SurfaceControl = Color(0xFF2C2C2C)
 
     // ═══════════════════════════════════════════════
-    // GLASS SYSTEM — VisionOS Inspired
+    // TEXT
     // ═══════════════════════════════════════════════
-    val GlassUltraThin = Color(0x0DFFFFFF)       // 5% white
-    val GlassThin = Color(0x1AFFFFFF)             // 10% white
-    val GlassRegular = Color(0x33FFFFFF)          // 20% white
-    val GlassThick = Color(0x4DFFFFFF)            // 30% white
-    val GlassUltraThick = Color(0x66FFFFFF)       // 40% white
-
-    val GlassBorderLight = Color(0x26FFFFFF)      // 15% white
-    val GlassBorderMedium = Color(0x33FFFFFF)     // 20% white
-    val GlassBorderStrong = Color(0x4DFFFFFF)     // 30% white
-
-    val GlassShadow = Color(0x40000000)           // 25% black
-    val GlassHighlight = Color(0x1AFFFFFF)        // 10% white
-    val GlassReflection = Color(0x0DFFFFFF)       // 5% white
-
-    // Dark glass variants
-    val GlassDarkThin = Color(0x1A000000)         // 10% black
-    val GlassDarkRegular = Color(0x33000000)      // 20% black
-    val GlassDarkThick = Color(0x4D000000)        // 30% black
+    val TextPrimary = Color(0xFFFFFFFF)
+    val TextSecondary = Color(0xFFB3B3B3)
+    val TextTertiary = Color(0xFF737373)
+    val TextDisabled = Color(0xFF404040)
 
     // ═══════════════════════════════════════════════
-    // TEXT SYSTEM
-    // ═══════════════════════════════════════════════
-    val TextPrimary = Color(0xFFF8FAFC)
-    val TextSecondary = Color(0xFFCBD5E1)
-    val TextTertiary = Color(0xFF94A3B8)
-    val TextDisabled = Color(0xFF475569)
-    val TextInverse = Color(0xFF0F172A)
-    val TextLink = Color(0xFF60A5FA)
-
-    // ═══════════════════════════════════════════════
-    // SEMANTIC COLORS
-    // ═══════════════════════════════════════════════
-    val Success = Color(0xFF10B981)
-    val SuccessLight = Color(0xFF34D399)
-    val SuccessContainer = Color(0xFF064E3B)
-    
-    val Warning = Color(0xFFF59E0B)
-    val WarningLight = Color(0xFFFBBF24)
-    val WarningContainer = Color(0xFF78350F)
-    
-    val Error = Color(0xFFEF4444)
-    val ErrorLight = Color(0xFFF87171)
-    val ErrorContainer = Color(0xFF7F1D1D)
-    
-    val Info = Color(0xFF06B6D4)
-    val InfoLight = Color(0xFF22D3EE)
-    val InfoContainer = Color(0xFF164E63)
-
-    // ═══════════════════════════════════════════════
-    // CAMERA-SPECIFIC COLORS
+    // CAMERA-SPECIFIC
     // ═══════════════════════════════════════════════
     val CaptureButton = Color(0xFFFFFFFF)
-    val CaptureButtonActive = Color(0xFFEF4444)
-    val RecordingRed = Color(0xFFEF4444)
-    val RecordingPulse = Color(0x80EF4444)
-    val FocusRing = Color(0xFFFBBF24)
-    val FocusLocked = Color(0xFF10B981)
-    val GridLine = Color(0x4DFFFFFF)
-    val LevelIndicator = Color(0xFFFBBF24)
-    val LevelAligned = Color(0xFF10B981)
-    val HistogramFill = Color(0x80FFFFFF)
-    val ZebraStripe = Color(0x80FF0000)
-    val FocusPeaking = Color(0xFF00FF00)
+    val RecordingRed = Color(0xFFFF3B30)
+    val RecordingPulse = Color(0x80FF3B30)
+    val FocusRing = Color(0xFFFFCC00)
+    val FocusLocked = Color(0xFF34C759)
+    val GridLine = Color(0x40FFFFFF)
+    val LevelIndicator = Color(0xFFFFCC00)
+    val LevelAligned = Color(0xFF34C759)
 
-    // ═══════════════════════════════════════════════
-    // GRADIENT COMPONENTS
-    // ═══════════════════════════════════════════════
-    val GradientStart = Color(0xFF3B82F6)
-    val GradientMid = Color(0xFF8B5CF6)
-    val GradientEnd = Color(0xFFEC4899)
+    // Zoom dial
+    val ZoomDialBg = Color(0xCC000000)         // 80% black
+    val ZoomDialActive = Color(0xFFFFCC00)     // Samsung gold
+    val ZoomDialInactive = Color(0xFF808080)
+    val ZoomDialTrack = Color(0xFF333333)
 
-    val ViewfinderGradientTop = Color(0x80000000)
-    val ViewfinderGradientBottom = Color(0xCC000000)
+    // Mode selector
+    val ModeActive = Color(0xFFFFCC00)
+    val ModeInactive = Color(0xFF999999)
+
+    // Top bar controls
+    val TopBarBg = Color(0x00000000)            // Transparent
+    val TopBarIcon = Color(0xFFFFFFFF)
+    val TopBarIconActive = Color(0xFFFFCC00)
+
+    // Viewfinder gradients
+    val ViewfinderGradientTop = Color(0x66000000)
+    val ViewfinderGradientBottom = Color(0x99000000)
     val ViewfinderClear = Color(0x00000000)
+
+    // Semantic
+    val Success = Color(0xFF34C759)
+    val Warning = Color(0xFFFFCC00)
+    val Error = Color(0xFFFF3B30)
+    val Accent = Color(0xFFFFCC00)
 }

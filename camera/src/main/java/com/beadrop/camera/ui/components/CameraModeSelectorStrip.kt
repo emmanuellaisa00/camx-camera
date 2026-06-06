@@ -1,28 +1,28 @@
 package com.beadrop.camera.ui.components
 
-import androidx.compose.animation.*
-import androidx.compose.animation.core.*
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.beadrop.core.domain.model.CameraMode
 import com.beadrop.design.tokens.ColorTokens
-import com.beadrop.design.tokens.SpacingTokens
-import com.beadrop.design.tokens.TypographyTokens
 
 /**
- * Horizontal mode selector strip — Samsung/Apple style.
- * Active mode is highlighted with scale and color animation.
+ * Samsung One UI style mode selector — horizontal text labels.
+ * Active mode highlighted in gold.
  */
 @Composable
 fun CameraModeSelectorStrip(
@@ -30,61 +30,46 @@ fun CameraModeSelectorStrip(
     currentMode: CameraMode,
     onModeSelected: (CameraMode) -> Unit,
 ) {
-    val listState = rememberLazyListState()
     val modes = CameraMode.defaultOrder
 
-    // Scroll to selected mode
-    LaunchedEffect(currentMode) {
-        val index = modes.indexOf(currentMode)
-        if (index >= 0) {
-            listState.animateScrollToItem(
-                index = maxOf(0, index - 1),
-            )
-        }
-    }
-
-    LazyRow(
+    Row(
         modifier = modifier
             .fillMaxWidth()
             .height(36.dp),
-        state = listState,
-        horizontalArrangement = Arrangement.spacedBy(SpacingTokens.XS),
-        contentPadding = PaddingValues(horizontal = SpacingTokens.XXL),
+        horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        items(modes) { mode ->
+        modes.forEachIndexed { index, mode ->
             val isSelected = mode == currentMode
 
+            val textColor by animateColorAsState(
+                targetValue = if (isSelected) ColorTokens.ModeActive else ColorTokens.ModeInactive,
+                animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+                label = "modeColor_$index",
+            )
+
             val scale by animateFloatAsState(
-                targetValue = if (isSelected) 1.15f else 1f,
+                targetValue = if (isSelected) 1.1f else 1f,
                 animationSpec = spring(
                     dampingRatio = Spring.DampingRatioMediumBouncy,
                     stiffness = Spring.StiffnessHigh,
                 ),
-                label = "modeScale",
-            )
-
-            val textColor by animateColorAsState(
-                targetValue = if (isSelected) ColorTokens.Accent else ColorTokens.TextTertiary,
-                animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
-                label = "modeColor",
+                label = "modeScale_$index",
             )
 
             Text(
                 text = mode.shortName,
-                style = TypographyTokens.CameraMode.copy(
-                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                ),
                 color = textColor,
+                fontSize = 13.sp,
+                fontWeight = if (isSelected) FontWeight.ExtraBold else FontWeight.Medium,
+                letterSpacing = 1.sp,
                 modifier = Modifier
                     .scale(scale)
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null,
-                    ) {
-                        onModeSelected(mode)
-                    }
-                    .padding(horizontal = SpacingTokens.S, vertical = SpacingTokens.XS),
+                    ) { onModeSelected(mode) }
+                    .padding(horizontal = 14.dp, vertical = 6.dp),
             )
         }
     }
