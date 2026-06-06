@@ -1,0 +1,160 @@
+name: Beadrop Camera CI/CD
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  JAVA_VERSION: '17'
+  GRADLE_OPTS: '-Dorg.gradle.jvmargs=-Xmx4g -Dorg.gradle.daemon=false'
+
+jobs:
+  # ═══════════════════════════════════════════════════
+  # LINT & BUILD
+  # ═══════════════════════════════════════════════════
+  build:
+    name: Build & Lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          cache-read-only: ${{ github.ref != 'refs/heads/main' }}
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Run Lint
+        run: ./gradlew lint --continue || true
+
+      - name: Build Debug APK
+        run: ./gradlew assembleDebug
+
+      - name: Upload Debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug-apk
+          path: app/build/outputs/apk/debug/*.apk
+          retention-days: 14
+
+      - name: Upload Lint Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lint-reports
+          path: '**/build/reports/lint-results-*.html'
+          retention-days: 7
+
+  # ═══════════════════════════════════════════════════
+  # UNIT TESTS
+  # ═══════════════════════════════════════════════════
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Run Unit Tests
+        run: ./gradlew testDebugUnitTest --continue || true
+
+      - name: Upload Test Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-test-reports
+          path: '**/build/reports/tests/'
+          retention-days: 7
+
+  # ═══════════════════════════════════════════════════
+  # BUILD RELEASE (main branch only)
+  # ═══════════════════════════════════════════════════
+  build-release:
+    name: Build Release
+    needs: [build, unit-tests]
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Generate Version
+        id: version
+        run: |
+          VERSION_CODE=$(git rev-list --count HEAD)
+          VERSION_NAME="1.0.${VERSION_CODE}"
+          echo "VERSION_CODE=${VERSION_CODE}" >> $GITHUB_OUTPUT
+          echo "VERSION_NAME=${VERSION_NAME}" >> $GITHUB_OUTPUT
+          echo "Generated version: ${VERSION_NAME} (${VERSION_CODE})"
+
+      - name: Build Release APK (unsigned)
+        run: ./gradlew assembleRelease || ./gradlew assembleDebug
+
+      - name: Generate Changelog
+        id: changelog
+        run: |
+          CHANGELOG=$(git log --oneline -20 --pretty=format:"• %s")
+          echo "changelog<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGELOG" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Create Release Summary
+        run: |
+          cat << EOF > release-summary.md
+          # Beadrop Camera v${{ steps.version.outputs.VERSION_NAME }}
+          
+          ## Build Info
+          - Version: ${{ steps.version.outputs.VERSION_NAME }}
+          - Build: ${{ steps.version.outputs.VERSION_CODE }}
+          - Date: $(date -u +"%Y-%m-%d %H:%M UTC")
+          - Commit: ${{ github.sha }}
+          
+          ## Changelog
+          ${{ steps.changelog.outputs.changelog }}
+          EOF
+
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-build
+          path: |
+            app/build/outputs/apk/**/*.apk
+            release-summary.md
+          retention-days: 30

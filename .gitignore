@@ -1,0 +1,39 @@
+*.iml
+.gradle
+/local.properties
+/.idea
+.DS_Store
+/build
+/*/build
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+*.jks
+*.keystore
+/keystore/
+google-services.json
+
+# Kotlin
+*.class
+
+# Android
+*.apk
+*.aab
+*.ap_
+*.dex
+
+# Build caches
+.cache/
+__pycache__/
+*.pyc
+
+# IDE
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
