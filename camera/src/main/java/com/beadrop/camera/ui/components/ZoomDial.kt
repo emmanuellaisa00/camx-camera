@@ -249,8 +249,6 @@ fun ZoomDial(
     }
 }
 
-/**
-
 private fun formatZoom(zoom: Float): String {
     return when {
         zoom < 1f -> "%.1f×".format(zoom)
