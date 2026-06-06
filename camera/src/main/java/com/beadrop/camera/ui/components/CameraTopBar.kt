@@ -54,7 +54,7 @@ fun CameraTopBar(
                         FlashMode.OFF -> Icons.Outlined.FlashOff
                         FlashMode.ON -> Icons.Filled.FlashOn
                         FlashMode.AUTO -> Icons.Outlined.FlashAuto
-                        FlashMode.TORCH -> Icons.Filled.Flashlight
+                        FlashMode.TORCH -> Icons.Filled.FlashOn
                     },
                     onClick = onFlashClick,
                     contentDescription = "Flash: ${config.flashMode.displayName}",

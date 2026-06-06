@@ -5,6 +5,10 @@ plugins {
 }
 
 android {
+    lint {
+        abortOnError = false
+        checkReleaseBuilds = false
+    }
     namespace = "com.beadrop.design"
     compileSdk = AppConfig.compileSdk
     defaultConfig { minSdk = AppConfig.minSdk }

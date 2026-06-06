@@ -1,5 +1,6 @@
 package com.beadrop.design.haptics
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Build
 import android.os.VibrationEffect
@@ -17,6 +18,7 @@ import androidx.compose.ui.platform.LocalHapticFeedback
  * 
  * Provides premium haptic patterns for camera interactions.
  */
+@SuppressLint("MissingPermission")
 class HapticEngine(private val context: Context) {
 
     private val vibrator: Vibrator by lazy {

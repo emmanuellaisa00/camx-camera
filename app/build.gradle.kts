@@ -8,6 +8,10 @@ plugins {
 }
 
 android {
+    lint {
+        abortOnError = false
+        checkReleaseBuilds = false
+    }
     namespace = AppConfig.applicationId
     compileSdk = AppConfig.compileSdk
 

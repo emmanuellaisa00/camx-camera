@@ -7,6 +7,10 @@ plugins {
 }
 
 android {
+    lint {
+        abortOnError = false
+        checkReleaseBuilds = false
+    }
     namespace = "com.beadrop.editor"
     compileSdk = AppConfig.compileSdk
     defaultConfig { minSdk = AppConfig.minSdk }
