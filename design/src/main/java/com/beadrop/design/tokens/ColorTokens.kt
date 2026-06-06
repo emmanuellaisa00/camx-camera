@@ -70,4 +70,35 @@ object ColorTokens {
     val Warning = Color(0xFFFFCC00)
     val Error = Color(0xFFFF3B30)
     val Accent = Color(0xFFFFCC00)
+
+    // ═══════════════════════════════════════════════
+    // GLASS SYSTEM (kept for gallery/settings compat)
+    // ═══════════════════════════════════════════════
+    val GlassUltraThin = Color(0x0DFFFFFF)
+    val GlassThin = Color(0x1AFFFFFF)
+    val GlassRegular = Color(0x33FFFFFF)
+    val GlassThick = Color(0x4DFFFFFF)
+    val GlassUltraThick = Color(0x66FFFFFF)
+    val GlassBorderLight = Color(0x26FFFFFF)
+    val GlassBorderMedium = Color(0x33FFFFFF)
+    val GlassBorderStrong = Color(0x4DFFFFFF)
+    val GlassShadow = Color(0x40000000)
+    val GlassHighlight = Color(0x1AFFFFFF)
+
+    // ═══════════════════════════════════════════════
+    // THEME COMPAT
+    // ═══════════════════════════════════════════════
+    val PrimaryContainer = Color(0xFF1A1A2E)
+    val OnPrimaryContainer = Color(0xFFD6E4FF)
+    val Secondary = Color(0xFF8B5CF6)
+    val OnSecondary = Color(0xFFFFFFFF)
+    val SecondaryContainer = Color(0xFF1E1E2E)
+    val OnSecondaryContainer = Color(0xFFEDE9FE)
+    val ErrorContainer = Color(0xFF7F1D1D)
+    val SurfaceDeep = Color(0xFF0A0A0A)
+    val HistogramFill = Color(0x80FFFFFF)
+    val FocusPeaking = Color(0xFF00FF00)
+    val TextLink = Color(0xFF60A5FA)
+    val TextInverse = Color(0xFF0F172A)
+    val OnPrimary_compat = Color(0xFFFFFFFF)
 }
