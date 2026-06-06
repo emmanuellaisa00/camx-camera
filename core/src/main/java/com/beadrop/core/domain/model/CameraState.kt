@@ -112,13 +112,16 @@ data class FocusState(
 @Serializable
 data class ExposureState(
     val exposureCompensation: Int = 0,
-    val exposureRange: IntRange = -12..12,
+    val exposureRangeMin: Int = -12,
+    val exposureRangeMax: Int = 12,
     val exposureStep: Float = 0.166f,
     val isLocked: Boolean = false,
     val iso: Int = 0,
     val shutterSpeed: Long = 0L,
     val aperture: Float = 0f,
-)
+) {
+    val exposureRange: IntRange get() = exposureRangeMin..exposureRangeMax
+}
 
 @Serializable
 data class ProModeState(

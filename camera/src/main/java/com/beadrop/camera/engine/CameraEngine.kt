@@ -228,7 +228,8 @@ class CameraEngine @Inject constructor(
         val range = info.exposureState.exposureCompensationRange
         val step = info.exposureState.exposureCompensationStep.toFloat()
         _exposureState.value = ExposureState(
-            exposureRange = range.lower..range.upper,
+            exposureRangeMin = range.lower,
+            exposureRangeMax = range.upper,
             exposureStep = step,
         )
     }
