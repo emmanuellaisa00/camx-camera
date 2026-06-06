@@ -282,21 +282,15 @@ fun CameraScreen(
                     viewModel.setTimer(timers[(idx + 1) % timers.size])
                 }) {
                     Icon(
-                        imageVector = if (config.timer == TimerDuration.OFF) Icons.Outlined.Timer else Icons.Outlined.Timer,
-                        contentDescription = "Timer",
+                        imageVector = when (config.timer) {
+                            TimerDuration.OFF -> Icons.Outlined.TimerOff
+                            TimerDuration.SEC_2 -> Icons.Outlined.Timer
+                            TimerDuration.SEC_5 -> Icons.Outlined.Timer
+                            TimerDuration.SEC_10 -> Icons.Outlined.Timer
+                        },
+                        contentDescription = "Timer: ${config.timer.displayName}",
                         tint = if (config.timer == TimerDuration.OFF) ColorTokens.TopBarIcon else ColorTokens.TopBarIconActive,
                     )
-                    if (config.timer != TimerDuration.OFF) {
-                        Text(
-                            text = config.timer.displayName,
-                            color = ColorTokens.TopBarIconActive,
-                            fontSize = 8.sp,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier
-                                .align(Alignment.BottomEnd)
-                                .padding(bottom = 2.dp, end = 2.dp),
-                        )
-                    }
                 }
 
                 // Settings
