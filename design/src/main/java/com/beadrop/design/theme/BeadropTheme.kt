@@ -53,7 +53,7 @@ data class BeadropExtendedColors(
     val glassShadow: androidx.compose.ui.graphics.Color = ColorTokens.GlassShadow,
     val glassHighlight: androidx.compose.ui.graphics.Color = ColorTokens.GlassHighlight,
     val captureButton: androidx.compose.ui.graphics.Color = ColorTokens.CaptureButton,
-    val captureActive: androidx.compose.ui.graphics.Color = ColorTokens.CaptureButtonActive,
+    val captureActive: androidx.compose.ui.graphics.Color = ColorTokens.RecordingRed,
     val recording: androidx.compose.ui.graphics.Color = ColorTokens.RecordingRed,
     val focusRing: androidx.compose.ui.graphics.Color = ColorTokens.FocusRing,
     val focusLocked: androidx.compose.ui.graphics.Color = ColorTokens.FocusLocked,
